@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LaboratorSistemeRecunoastereaFormelor": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

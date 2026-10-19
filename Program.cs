@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LaboratorSistemeRecunoastereaFormelor
 {
@@ -110,6 +112,44 @@ namespace LaboratorSistemeRecunoastereaFormelor
                 Console.WriteLine($"\nExemplu de radacini extrase pentru {documente[0].FileName}:");
                 Console.WriteLine(string.Join(", ", documente[0].StemmedWords.Take(15)) + " ...");
             }
+
+            var wordToIndex = globalVocabulary
+                .Select((word, index) => new { word, index })
+                .ToDictionary(index=> index.word, index => index.index);
+
+            string outputPath = @"C:\Users\sbirc\Desktop\INGINERIE\An III Facultate\An 3 sem 1\LaboratorSistemeRecunoastereaFormelor\dataset_procesat.txt";
+            Console.WriteLine("\nSe scrie fisierul 'dataset_procesat.txt.");
+            using (StreamWriter writer = new StreamWriter(outputPath, false, Encoding.UTF8))
+            {
+                foreach (string word in globalVocabulary)
+                {
+                    writer.WriteLine($"@attribute {word}");
+                }
+
+                writer.WriteLine("@data");
+
+                foreach (var doc in documente)
+                {
+                    var frequencies = new SortedDictionary<int, int>();
+
+                    foreach (var stem in doc.StemmedWords)
+                    {
+                        if (wordToIndex.TryGetValue(stem, out int idx))
+                        {
+                            frequencies[idx] = frequencies.ContainsKey(idx) ? frequencies[idx] + 1 : 1;
+                        }
+                    }
+
+                    string sparseVector = string.Join(" ", frequencies.Select(f => $"{f.Key}:{f.Value}"));
+                    string topicsStr = string.Join(" ", doc.Topics);
+
+                    writer.WriteLine($"{doc.FileName} # {sparseVector} # {topicsStr} # {doc.FolderType}");
+                }
+            }
+
+            Console.WriteLine("Fișierul a fost generat cu succes.");
+
+
         }
     }
 }

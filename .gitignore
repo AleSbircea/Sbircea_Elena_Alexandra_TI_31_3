@@ -361,6 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+
+
+
+
 # Dataset-uri și fișiere de procesare text
 *.txt
 !stopwords.txt

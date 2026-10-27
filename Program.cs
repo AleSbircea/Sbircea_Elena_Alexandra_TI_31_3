@@ -63,8 +63,9 @@ namespace LaboratorSistemeRecunoastereaFormelor
                 var topics = doc.Descendants("codes")
                     .Where(c => (string)c.Attribute("class") == "bip:topics:1.0")
                     .Elements("code")
-                    .Select(c => (string)c.Attribute("value"))
+                    .Select(c => (string)c.Attribute("code") ?? (string)c.Attribute("value"))
                     .Where(val => !string.IsNullOrEmpty(val))
+                    .Distinct()
                     .ToList();
 
                 var docData = new DocumentData
@@ -147,7 +148,7 @@ namespace LaboratorSistemeRecunoastereaFormelor
                 }
             }
 
-            Console.WriteLine("Fișierul a fost generat cu succes.");
+            Console.WriteLine("Fisierul a fost generat cu succes.");
 
 
         }

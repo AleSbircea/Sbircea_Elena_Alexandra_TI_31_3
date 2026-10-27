@@ -81,7 +81,7 @@ namespace LaboratorSistemeRecunoastereaFormelor
 
                 foreach (string token in tokens)
                 {
-                    if (!stopwords.Contains(token) && token.Length > 2)
+                    if (!stopwords.Contains(token) && token.Length >=1)
                     {
                         string stem = stemmer.StemWord(token);
 

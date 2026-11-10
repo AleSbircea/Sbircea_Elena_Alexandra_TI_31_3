@@ -18,8 +18,31 @@ namespace LaboratorSistemeRecunoastereaFormelor
         public string RawContent { get; set; }  
     }
 
+
     class Program
     {
+        private static double CalculeazaEntropie(List<DocumentData> documenteSubset)
+        {
+            if (documenteSubset.Count == 0) return 0.0;
+            var frecventeClase = documenteSubset
+                .Select(d => d.Topics.FirstOrDefault() ?? "UNK")
+                .GroupBy(t => t)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            double entropie = 0.0;
+            double total = documenteSubset.Count;
+
+            foreach (var kvp in frecventeClase)
+            {
+                double p = kvp.Value / total;
+                if (p > 0)
+                {
+                    entropie -= p * (Math.Log(p) / Math.Log(2));
+                }
+            }
+
+            return entropie;
+        }
         static void Main(string[] args)
         {
             string stopwordsPath = @"C:\Users\sbirc\Desktop\INGINERIE\An III Facultate\An 3 sem 1\LaboratorSistemeRecunoastereaFormelor\stopwords.txt";
@@ -149,6 +172,67 @@ namespace LaboratorSistemeRecunoastereaFormelor
             }
 
             Console.WriteLine("Fisierul a fost generat cu succes.");
+
+
+            //Lab 3 - Calculare castig informational
+            Console.WriteLine("\n--- Calculare Castig Informational (Etapa 1 - Lab 3) ---");
+
+            double entropieTotala = CalculeazaEntropie(documente);
+            Console.WriteLine($"Entropia totala S: {entropieTotala:F4}");
+
+            List<string> vocabularList = globalVocabulary.ToList();
+            Dictionary<string, double> gains = new Dictionary<string, double>();
+
+            for (int i = 0; i < vocabularList.Count; i++)
+            {
+                string cuvant = vocabularList[i];
+
+                var sPrezent = documente.Where(d => d.StemmedWords.Contains(cuvant)).ToList();
+
+                var sAbsent = documente.Where(d => !d.StemmedWords.Contains(cuvant)).ToList();
+
+                double pPrezent = (double)sPrezent.Count / documente.Count;
+                double pAbsent = (double)sAbsent.Count / documente.Count;
+
+                double ePrezent = CalculeazaEntropie(sPrezent);
+                double eAbsent = CalculeazaEntropie(sAbsent);
+
+                double gain = entropieTotala - (pAbsent * eAbsent) - (pPrezent * ePrezent);
+                gains[cuvant] = gain < 0 ? 0 : gain;
+            }
+
+            string outputPathGain = @"C:\Users\sbirc\Desktop\INGINERIE\An III Facultate\An 3 sem 1\LaboratorSistemeRecunoastereaFormelor\dataset_cu_gain.txt";
+            Console.WriteLine("Se scrie fisierul 'dataset_cu_gain.txt'...");
+
+            using (StreamWriter writer = new StreamWriter(outputPathGain, false, Encoding.UTF8))
+            {
+                foreach (string word in globalVocabulary)
+                {
+                    writer.WriteLine($"@attribute {word} {gains[word]:F6}");
+                }
+
+                writer.WriteLine("@data");
+
+                foreach (var doc in documente)
+                {
+                    var frequencies = new SortedDictionary<int, int>();
+
+                    foreach (var stem in doc.StemmedWords)
+                    {
+                        if (wordToIndex.TryGetValue(stem, out int idx))
+                        {
+                            frequencies[idx] = frequencies.ContainsKey(idx) ? frequencies[idx] + 1 : 1;
+                        }
+                    }
+
+                    string sparseVector = string.Join(" ", frequencies.Select(f => $"{f.Key}:{f.Value}"));
+                    string topicsStr = string.Join(" ", doc.Topics);
+
+                    writer.WriteLine($"{doc.FileName} # {sparseVector} # {topicsStr} # {doc.FolderType}");
+                }
+            }
+
+            Console.WriteLine("Fisierul 'dataset_cu_gain.txt' a fost generat cu succes!");
 
 
         }
